@@ -55,7 +55,9 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            echo "${{ secrets.APPLICATION_PROPERTIES }}" > ~/analysis-service/application.properties
+            cat <<EOF > ~/analysis-service/application.properties
+            ${{ secrets.APPLICATION_PROPERTIES }}
+            EOF
 
       # 4. startup.sh 실행
       - name: Execute startup script
