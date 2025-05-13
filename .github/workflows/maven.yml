@@ -31,9 +31,9 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
           source: "target/*.jar"
-          target: "~/work-analysis/"
+          target: "~/analysis-service/"
 
-      - name: execute work-entry startup script
+      - name: execute analysis-service startup script
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_IP }}
@@ -42,5 +42,5 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script_stop: true
           script: |
-            chmod +x ~/work-analysis/startup.sh  
-            cd ~/work-analysis && ./startup.sh
+            chmod +x ~/analysis-service/startup.sh  
+            cd ~/analysis-service && ./startup.sh
