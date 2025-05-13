@@ -1,4 +1,4 @@
-name: Data Processor CI/CD
+name: analysis-service CI/CD
 
 on:
   push:
@@ -55,7 +55,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            echo "${{ secrets.APPLICATION_PROPERTIES }}" > ~/work-analysis/application.properties
+            echo "${{ secrets.APPLICATION_PROPERTIES }}" > ~/analysis-service/src/main/resources/application.properties
 
       # 4. startup.sh 실행
       - name: Execute startup script
