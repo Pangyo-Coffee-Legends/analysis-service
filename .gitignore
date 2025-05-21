@@ -38,5 +38,5 @@ mvnw
 
 # application.properties 무시
 *.properties
-
+logs
 .env
