@@ -4,10 +4,6 @@
     <!-- ① 로그를 ./logs 폴더에 남기도록 기본값 설정 -->
     <springProperty name="LOG_PATH" source="logging.file.path" defaultValue="./logs"/>
 
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
-    </appender>
-
     <!-- ② JSON 로그 출력용 RollingFileAppender -->
     <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <!-- 고정된 파일명(app.log) -->
@@ -27,7 +23,6 @@
     <!-- ③ 루트 로거: INFO 이상 로그를 JSON_FILE로 남김 -->
     <root level="INFO">
         <appender-ref ref="JSON_FILE"/>
-        <appender-ref ref="CONSOLE"/>
     </root>
 
 </configuration>
