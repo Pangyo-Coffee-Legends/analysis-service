@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhnacademy.workanalysis.dto.GeminiAnalysisRequest;
 import com.nhnacademy.workanalysis.dto.GeminiAnalysisResponse;
+import com.nhnacademy.workanalysis.dto.MessageDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -35,7 +36,7 @@ public class AiChatApiClient {
      * @param memberNo 분석 대상 사원 번호
      * @return GeminiAnalysisResponse 분석 응답 결과 (성공 또는 실패 메시지 포함)
      */
-    public GeminiAnalysisResponse call(List<GeminiAnalysisRequest.Message> messages, Long memberNo) {
+    public GeminiAnalysisResponse call(List<MessageDto> messages, Long memberNo) {
         String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey;
 
         // 요청 본문 구성: role + parts(text)
