@@ -18,5 +18,5 @@ public interface AiChatHistoryRepository extends JpaRepository<AiChatHistory, Lo
      * @param threadId 조회할 쓰레드 ID
      * @return 해당 쓰레드에 속한 히스토리 리스트 (최신순 정렬)
      */
-    List<AiChatHistory> findByHistoryIdOrderByCreatedAtDesc(Long threadId);
+    List<AiChatHistory> findByThread_ThreadIdOrderByCreatedAtDesc(Long threadId);
 }

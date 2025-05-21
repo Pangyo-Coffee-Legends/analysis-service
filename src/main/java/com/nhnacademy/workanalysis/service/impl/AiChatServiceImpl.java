@@ -138,6 +138,6 @@ public class AiChatServiceImpl implements AiChatService {
     @Override
     public List<AiChatHistory> getHistoriesByThread(Long threadId) {
         log.debug("히스토리 조회 시도 - threadId: {}", threadId);
-        return aiChatHistoryRepository.findByHistoryIdOrderByCreatedAtDesc(threadId);
+        return aiChatHistoryRepository.findByThread_ThreadIdOrderByCreatedAtDesc(threadId);
     }
 }
