@@ -1,8 +1,8 @@
 package com.nhnacademy.workanalysis.repository;
 
 import com.nhnacademy.workanalysis.entity.AiChatThread;
+import com.nhnacademy.workanalysis.repository.custom.AiChatThreadRepositoryCustom;
 import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.List;
 
 /**
@@ -10,7 +10,7 @@ import java.util.List;
  * 기본적인 CRUD 메서드는 JpaRepository에서 제공되며,
  * 특정 사원(mbNo)의 쓰레드를 생성일 기준으로 정렬하여 조회하는 메서드를 제공합니다.
  */
-public interface AiChatThreadRepository extends JpaRepository<AiChatThread, Long> {
+public interface AiChatThreadRepository extends JpaRepository<AiChatThread, Long>, AiChatThreadRepositoryCustom {
 
     /**
      * 특정 사원 번호(mbNo)에 해당하는 모든 쓰레드를 생성일 기준으로 내림차순 정렬하여 조회합니다.

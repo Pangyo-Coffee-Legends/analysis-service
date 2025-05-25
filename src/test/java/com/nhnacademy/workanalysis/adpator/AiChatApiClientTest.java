@@ -2,13 +2,15 @@ package com.nhnacademy.workanalysis.adpator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhnacademy.workanalysis.adaptor.AiChatApiClient;
-import com.nhnacademy.workanalysis.dto.GeminiAnalysisRequest;
 import com.nhnacademy.workanalysis.dto.GeminiAnalysisResponse;
 import com.nhnacademy.workanalysis.dto.MessageDto;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.*;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
@@ -16,9 +18,13 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.when;
 
-@WebMvcTest(AiChatApiClient.class)
+/**
+ * AiChatApiClient 클래스의 Gemini API 호출 로직에 대한 단위 테스트입니다.
+ */
+@ExtendWith(MockitoExtension.class)
 class AiChatApiClientTest {
 
     @InjectMocks
@@ -31,21 +37,16 @@ class AiChatApiClientTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
         ReflectionTestUtils.setField(aiChatApiClient, "apiKey", "fake-api-key");
         ReflectionTestUtils.setField(aiChatApiClient, "restTemplate", restTemplate);
         ReflectionTestUtils.setField(aiChatApiClient, "objectMapper", objectMapper);
     }
 
-    /**
-     * Gemini API 호출 성공 시 응답 결과가 정상적으로 파싱되어 반환되는지 테스트합니다.
-     */
     @Test
+    @DisplayName("Gemini API 호출 성공 - 텍스트 정상 반환")
     void testCall_whenSuccess_shouldReturnParsedText() {
         // given
-        MessageDto message = new MessageDto();
-        message.setRole("user");
-        message.setContent("출근 상태를 분석해줘");
+        MessageDto message = new MessageDto("user", "출근 상태를 분석해줘");
         List<MessageDto> messages = List.of(message);
 
         String apiResponseJson = """
@@ -76,15 +77,11 @@ class AiChatApiClientTest {
         assertThat(response.getFullText()).isEqualTo("분석 결과입니다.");
     }
 
-    /**
-     * Gemini API 호출 실패 시 예외 메시지가 포함된 응답이 반환되는지 테스트합니다.
-     */
     @Test
+    @DisplayName("Gemini API 호출 예외 발생 - 에러 메시지 포함 반환")
     void testCall_whenApiFails_shouldReturnErrorMessage() {
         // given
-        MessageDto message = new MessageDto();
-        message.setRole("user");
-        message.setContent("지각 상태 분석");
+        MessageDto message = new MessageDto("user", "지각 상태 분석");
         List<MessageDto> messages = List.of(message);
 
         when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(), eq(String.class)))
@@ -95,18 +92,14 @@ class AiChatApiClientTest {
 
         // then
         assertThat(response.getMemberNo()).isEqualTo(2002L);
-        assertThat(response.getFullText()).contains("Gemini 호출 실패");
+        assertThat(response.getFullText()).contains("❌ 시스템 오류");
     }
 
-    /**
-     * Gemini 응답 JSON에서 텍스트가 누락된 경우 처리되는지 테스트합니다.
-     */
     @Test
+    @DisplayName("Gemini 응답 JSON에 텍스트 필드 누락 시 경고 메시지 반환")
     void testCall_whenTextMissing_shouldReturnWarningMessage() {
         // given
-        MessageDto message = new MessageDto();
-        message.setRole("user");
-        message.setContent("결근 상태 분석");
+        MessageDto message = new MessageDto("user", "결근 상태 분석");
         List<MessageDto> messages = List.of(message);
 
         String invalidJson = """
@@ -130,6 +123,6 @@ class AiChatApiClientTest {
 
         // then
         assertThat(response.getMemberNo()).isEqualTo(3003L);
-        assertThat(response.getFullText()).contains("파싱 실패");
+        assertThat(response.getFullText()).contains("❌ 분석 결과를 찾을 수 없습니다.");
     }
 }

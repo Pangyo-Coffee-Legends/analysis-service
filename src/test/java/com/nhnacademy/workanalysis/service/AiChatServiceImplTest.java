@@ -1,12 +1,10 @@
 package com.nhnacademy.workanalysis.service;
 
 import com.nhnacademy.workanalysis.adaptor.AiChatApiClient;
-import com.nhnacademy.workanalysis.dto.GeminiAnalysisRequest;
-import com.nhnacademy.workanalysis.dto.GeminiAnalysisResponse;
-import com.nhnacademy.workanalysis.dto.MessageDto;
+import com.nhnacademy.workanalysis.dto.*;
 import com.nhnacademy.workanalysis.entity.AiChatHistory;
 import com.nhnacademy.workanalysis.entity.AiChatThread;
-import com.nhnacademy.workanalysis.exception.ThreadNotFoundException;
+import com.nhnacademy.workanalysis.exception.AiChatThreadNotFoundException;
 import com.nhnacademy.workanalysis.repository.AiChatHistoryRepository;
 import com.nhnacademy.workanalysis.repository.AiChatThreadRepository;
 import com.nhnacademy.workanalysis.service.impl.AiChatServiceImpl;
@@ -17,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,7 +38,6 @@ class AiChatServiceImplTest {
     @InjectMocks
     private AiChatServiceImpl aiChatService;
 
-
     @Test
     @DisplayName("analyze: Gemini API 호출 성공")
     void testAnalyze() {
@@ -59,15 +57,13 @@ class AiChatServiceImplTest {
 
     @Test
     @DisplayName("createThread: 쓰레드 생성")
-    void testCreateThread() {
-        AiChatThread savedThread = new AiChatThread();
-        savedThread.setThreadId(1L);
-        savedThread.setMbNo(10L);
-        savedThread.setTitle("대화 제목");
+    void testCreateThread() throws Exception {
+        AiChatThread savedThread = AiChatThread.create(10L, "대화 제목");
+        setField(savedThread, "threadId", 1L);
 
         when(aiChatThreadRepository.save(any())).thenReturn(savedThread);
 
-        AiChatThread result = aiChatService.createThread(10L, "대화 제목");
+        AiChatThreadDto result = aiChatService.createThread(10L, "대화 제목");
 
         assertThat(result.getThreadId()).isEqualTo(1L);
         assertThat(result.getMbNo()).isEqualTo(10L);
@@ -77,10 +73,7 @@ class AiChatServiceImplTest {
     @Test
     @DisplayName("updateThreadTitle: 제목 변경 성공")
     void testUpdateThreadTitle() {
-        AiChatThread thread = new AiChatThread();
-        thread.setThreadId(1L);
-        thread.setTitle("old");
-
+        AiChatThread thread = AiChatThread.create(1L, "old");
         when(aiChatThreadRepository.findById(1L)).thenReturn(Optional.of(thread));
 
         aiChatService.updateThreadTitle(1L, "new title");
@@ -95,7 +88,7 @@ class AiChatServiceImplTest {
         when(aiChatThreadRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> aiChatService.updateThreadTitle(999L, "any"))
-                .isInstanceOf(ThreadNotFoundException.class);
+                .isInstanceOf(AiChatThreadNotFoundException.class);
     }
 
     @Test
@@ -104,22 +97,20 @@ class AiChatServiceImplTest {
         when(aiChatThreadRepository.existsById(999L)).thenReturn(false);
 
         assertThatThrownBy(() -> aiChatService.deleteThread(999L))
-                .isInstanceOf(ThreadNotFoundException.class);
+                .isInstanceOf(AiChatThreadNotFoundException.class);
     }
 
     @Test
     @DisplayName("saveHistory: 히스토리 저장 성공")
-    void testSaveHistory() {
-        AiChatThread thread = new AiChatThread();
-        thread.setThreadId(1L);
-
-        AiChatHistory history = new AiChatHistory();
-        history.setHistoryId(99L);
+    void testSaveHistory() throws Exception {
+        AiChatThread thread = AiChatThread.create(1L, "질문");
+        AiChatHistory history = AiChatHistory.of(thread, "user", "내용");
+        setField(history, "historyId", 99L);
 
         when(aiChatThreadRepository.findById(1L)).thenReturn(Optional.of(thread));
         when(aiChatHistoryRepository.save(any())).thenReturn(history);
 
-        AiChatHistory result = aiChatService.saveHistory(1L, "user", "내용");
+        AiChatHistoryDto result = aiChatService.saveHistory(1L, "user", "내용");
 
         assertThat(result.getHistoryId()).isEqualTo(99L);
     }
@@ -128,19 +119,26 @@ class AiChatServiceImplTest {
     @DisplayName("getThreadsByMember: 쓰레드 목록 반환")
     void testGetThreadsByMember() {
         when(aiChatThreadRepository.findByMbNoOrderByCreatedAtDesc(123L))
-                .thenReturn(List.of(new AiChatThread()));
+                .thenReturn(List.of(AiChatThread.create(123L, "제목")));
 
-        List<AiChatThread> result = aiChatService.getThreadsByMember(123L);
+        List<AiChatThreadDto> result = aiChatService.getThreadsByMember(123L);
         assertThat(result).hasSize(1);
     }
 
     @Test
     @DisplayName("getHistoriesByThread: 히스토리 목록 반환")
     void testGetHistoriesByThread() {
-        when(aiChatHistoryRepository.findByThread_ThreadIdOrderByCreatedAtDesc(1L))
-                .thenReturn(List.of(new AiChatHistory()));
+        AiChatThread thread = AiChatThread.create(1L, "세션");
+        when(aiChatHistoryRepository.findTop100ByThreadThreadIdOrderByCreatedAtDesc(1L))
+                .thenReturn(List.of(AiChatHistory.of(thread, "user", "내용")));
 
-        List<AiChatHistory> result = aiChatService.getHistoriesByThread(1L);
+        List<AiChatHistoryDto> result = aiChatService.getHistoriesByThread(1L);
         assertThat(result).hasSize(1);
+    }
+
+    private void setField(Object target, String fieldName, Object value) throws Exception {
+        Field field = target.getClass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        field.set(target, value);
     }
 }

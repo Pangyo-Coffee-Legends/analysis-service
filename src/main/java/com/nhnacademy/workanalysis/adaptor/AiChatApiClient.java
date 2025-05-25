@@ -1,18 +1,23 @@
 package com.nhnacademy.workanalysis.adaptor;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nhnacademy.workanalysis.dto.GeminiAnalysisRequest;
 import com.nhnacademy.workanalysis.dto.GeminiAnalysisResponse;
 import com.nhnacademy.workanalysis.dto.MessageDto;
+import com.nhnacademy.workanalysis.exception.TextNotFoundException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Gemini API를 호출하는 클라이언트 컴포넌트입니다.
@@ -20,13 +25,14 @@ import java.util.Map;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class AiChatApiClient {
 
     @Value("${gemini.api.key}")
     private String apiKey;
 
     private final RestTemplate restTemplate = new RestTemplate();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper=new ObjectMapper();
 
     /**
      * Gemini 2.0 Flash 모델을 이용하여 분석 요청을 수행합니다.
@@ -35,11 +41,15 @@ public class AiChatApiClient {
      * @param messages 이전까지의 대화 이력 + 유저의 현재 질문
      * @param memberNo 분석 대상 사원 번호
      * @return GeminiAnalysisResponse 분석 응답 결과 (성공 또는 실패 메시지 포함)
+     * @see {기존 하드코딩 방식의 url 입력 방식에서 {@link UriComponentsBuilder}방식으로 변경 인코딩 오류 방지 및 가독성 증가}
      */
     public GeminiAnalysisResponse call(List<MessageDto> messages, Long memberNo) {
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey;
+        String url = UriComponentsBuilder
+                .fromUriString("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent")
+                .queryParam("key", apiKey)
+                .build()
+                .toUriString();
 
-        // 요청 본문 구성: role + parts(text)
         List<Map<String, Object>> partsList = messages.stream()
                 .map(m -> Map.of("role", m.getRole(), "parts", List.of(Map.of("text", m.getContent()))))
                 .toList();
@@ -50,21 +60,31 @@ public class AiChatApiClient {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
-        log.debug("🛰️ Gemini API 요청 준비 완료 - memberNo: {}, 메시지 수: {}", memberNo, messages.size());
-        log.trace("Gemini 요청 본문: {}", body);
-
         try {
-            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
-            log.info("✅ Gemini API 응답 수신 - HTTP 상태: {}", response.getStatusCode());
-            String responseBody = response.getBody();
-            log.debug("🔎 Gemini 응답 원문: {}", responseBody);
-            String text = extractText(responseBody);
+            ResponseEntity<String> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.POST,
+                    entity,
+                    String.class
+            );
+
+            String json = response.getBody();
+            String text = extractText(json);
+
+            log.info("✅ Gemini API 응답 수신 - 상태: {}", response.getStatusCode());
             return new GeminiAnalysisResponse(memberNo, text);
-        } catch (Exception e) {
-            log.error("❌ Gemini API 호출 실패 - memberNo: {}, 에러: {}", memberNo, e.getMessage(), e);
-            return new GeminiAnalysisResponse(memberNo, "⚠️ Gemini 호출 실패: " + e.getMessage());
+        } catch (HttpStatusCodeException e) {
+            log.error("❌ Gemini API 호출 실패 - HTTP 오류: {}", e.getMessage(), e);
+            return new GeminiAnalysisResponse(memberNo, "❌ Gemini 호출 실패 - 상태 코드: " + e.getStatusCode());
+        } catch (TextNotFoundException e) {
+            log.error("❌ 분석 텍스트 누락 - {}", e.getMessage());
+            return new GeminiAnalysisResponse(memberNo, "❌ 분석 결과를 찾을 수 없습니다.");
+        } catch (Throwable e) {
+            log.error("❌ 예기치 못한 오류 발생: {}", e.getMessage(), e);
+            return new GeminiAnalysisResponse(memberNo, "❌ 시스템 오류: " + e.getMessage());
         }
     }
+
 
     /**
      * Gemini 응답 JSON에서 분석 결과 텍스트를 추출합니다.
@@ -78,12 +98,12 @@ public class AiChatApiClient {
             JsonNode root = objectMapper.readTree(json);
             String text = root.at("/candidates/0/content/parts/0/text").asText(null);
             if (text == null) {
-                log.warn("⚠️ 분석 결과 누락 - 응답에 텍스트 필드가 존재하지 않음");
-                throw new IllegalStateException("응답 JSON에 분석 결과 텍스트가 없습니다.");
+                log.error("⚠️ 분석 결과 누락 - 응답에 텍스트 필드가 존재하지 않음");
+                throw new TextNotFoundException("응답 JSON에 분석 결과 텍스트가 없습니다.");
             }
             log.debug("📦 Gemini 응답 텍스트 추출 성공");
             return text;
-        } catch (Exception e) {
+        } catch (HttpStatusCodeException | JsonProcessingException e) {
             log.warn("⚠️ Gemini 응답 파싱 실패: {}", e.getMessage(), e);
             return "⚠️ 분석 결과 파싱 실패";
         }

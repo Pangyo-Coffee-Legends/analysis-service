@@ -1,9 +1,6 @@
 package com.nhnacademy.workanalysis.service;
 
-import com.nhnacademy.workanalysis.dto.GeminiAnalysisRequest;
-import com.nhnacademy.workanalysis.dto.GeminiAnalysisResponse;
-import com.nhnacademy.workanalysis.entity.AiChatHistory;
-import com.nhnacademy.workanalysis.entity.AiChatThread;
+import com.nhnacademy.workanalysis.dto.*;
 
 import java.util.List;
 
@@ -26,9 +23,9 @@ public interface AiChatService {
      *
      * @param mbNo  쓰레드를 생성할 사원의 고유 번호
      * @param title 생성할 쓰레드의 제목
-     * @return 생성된 AiChatThread 엔티티 객체
+     * @return 생성된 AiChatThread DTO 객체
      */
-    AiChatThread createThread(Long mbNo, String title);
+    AiChatThreadDto createThread(Long mbNo, String title);
 
     /**
      * 특정 쓰레드에 대화 히스토리(메시지)를 저장합니다.
@@ -36,25 +33,25 @@ public interface AiChatService {
      * @param threadId 쓰레드 ID
      * @param role     메시지를 보낸 주체 ("user" 또는 "ai")
      * @param content  메시지 본문 내용
-     * @return 저장된 AiChatHistory 엔티티 객체
+     * @return 저장된 AiChatHistory DTO 객체
      */
-    AiChatHistory saveHistory(Long threadId, String role, String content);
+    AiChatHistoryDto saveHistory(Long threadId, String role, String content);
 
     /**
      * 특정 사원(mbNo)의 전체 대화 쓰레드 목록을 조회합니다.
      *
      * @param mbNo 사원 고유 번호
-     * @return 해당 사원의 쓰레드 목록 (최신순 정렬된 리스트)
+     * @return 해당 사원의 쓰레드 DTO 목록 (최신순 정렬된 리스트)
      */
-    List<AiChatThread> getThreadsByMember(Long mbNo);
+    List<AiChatThreadDto> getThreadsByMember(Long mbNo);
 
     /**
      * 특정 쓰레드에 속한 전체 대화 히스토리를 조회합니다.
      *
      * @param threadId 쓰레드 ID
-     * @return 해당 쓰레드의 전체 대화 히스토리 리스트 (최신순 정렬)
+     * @return 해당 쓰레드의 전체 대화 히스토리 DTO 리스트 (최신순 정렬)
      */
-    List<AiChatHistory> getHistoriesByThread(Long threadId);
+    List<AiChatHistoryDto> getHistoriesByThread(Long threadId);
 
     /**
      * 특정 쓰레드를 삭제합니다.
@@ -70,4 +67,20 @@ public interface AiChatService {
      * @param newTitle 새로운 쓰레드 제목
      */
     void updateThreadTitle(Long threadId, String newTitle);
+
+    /**
+     * 특정 쓰레드의 히스토리를 DTO 리스트로 반환합니다.
+     *
+     * @param threadId 쓰레드 ID
+     * @return 히스토리 DTO 리스트
+     */
+    List<AiChatHistoryDto> getHistoryDtoList(Long threadId);
+
+    /**
+     * 대화 메시지 저장 전 유효성 검사 및 변환을 수행하고 저장합니다.
+     *
+     * @param request 대화 저장 요청 DTO
+     * @return 저장된 히스토리 DTO 객체
+     */
+    AiChatHistoryDto saveValidatedMessage(AiChatHistorySaveRequest request);
 }
