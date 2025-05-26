@@ -36,6 +36,6 @@ public class AiChatHistorySaveRequest {
      * 실제 대화 메시지 내용입니다.
      * 공백일 수 없습니다.
      */
-    @NotBlank(message = "f메시지 내용은 필수입니다.")
+    @NotBlank(message = "메시지 내용은 필수입니다.")
     private String content;
 }
