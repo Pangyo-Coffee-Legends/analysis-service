@@ -24,8 +24,8 @@ public class RestTemplateConfig {
         log.info("📡 RestTemplate Bean 생성 시작 (타임아웃 설정 포함)");
 
         HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
-        factory.setConnectTimeout(3000);  // 연결 시도 제한 (3초)
-        factory.setReadTimeout(5000);     // 응답 대기 시간 제한 (5초)
+        factory.setConnectTimeout(30000);  // 연결 시도 제한 (30초)
+        factory.setReadTimeout(30000);     // 응답 대기 시간 제한 (30초)
 
         RestTemplate restTemplate = new RestTemplate(factory);
 
