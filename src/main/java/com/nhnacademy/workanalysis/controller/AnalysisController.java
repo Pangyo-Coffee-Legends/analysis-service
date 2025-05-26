@@ -2,6 +2,7 @@ package com.nhnacademy.workanalysis.controller;
 
 import com.nhnacademy.workanalysis.dto.*;
 import com.nhnacademy.workanalysis.exception.ThreadTitleEmptyException;
+import com.nhnacademy.workanalysis.exception.WorkEntryRecordNotFoundException;
 import com.nhnacademy.workanalysis.service.AiChatService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -152,6 +154,20 @@ public class AnalysisController {
         } catch (Exception e) {
             log.error("❌ [대화 저장 실패] 내부 예외 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+
+    @PostMapping("/reports")
+    public ResponseEntity<GeminiAnalysisResponse> generateAttendanceReport(@RequestBody @Valid ReportRequestDto request) {
+        try {
+            log.info("📝 [리포트 생성 요청] mbNo={}, year={}, month={}, codes={}",
+                    request.getMbNo(), request.getYear(), request.getMonth(), request.getStatusCodes());
+
+            GeminiAnalysisResponse response = aiChatService.generateReport(request);
+            return ResponseEntity.ok(response);
+        } catch (WorkEntryRecordNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
     }
 

@@ -166,6 +166,17 @@ public class GlobalAdviceHandler {
     }
 
     /**
+     * 근무기록을 찾지 못할 경우 예외를 처리합니다.
+     * @param ex {@link WorkEntryRecordNotFoundException}
+     * @return 404 Not Found
+     */
+    @ExceptionHandler(WorkEntryRecordNotFoundException.class)
+    public ResponseEntity<String> handleWorkEntryRecordNotFound(WorkEntryRecordNotFoundException ex) {
+        log.warn("📭 출결 기록 없음: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
+
+    /**
      * 그 외 모든 예외 처리 핸들러입니다.
      *
      * @param ex Throwable 예외 객체

@@ -122,14 +122,14 @@ class AnalysisControllerTest {
     }
 
     @Test
-    @DisplayName("POST /histories/save - 대화 저장")
+    @DisplayName("POST /histories - 대화 저장")
     void saveMessage_success() throws Exception {
         AiChatHistoryDto saved = new AiChatHistoryDto(99L, "user", "내용", LocalDateTime.now());
         AiChatHistorySaveRequest req = new AiChatHistorySaveRequest(10L, "user", "내용");
 
         Mockito.when(aiChatService.saveHistory(10L, "user", "내용")).thenReturn(saved);
 
-        mockMvc.perform(post("/api/v1/analysis/histories/save")
+        mockMvc.perform(post("/api/v1/analysis/histories")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
@@ -137,11 +137,11 @@ class AnalysisControllerTest {
     }
 
     @Test
-    @DisplayName("POST /histories/save - 필드 누락 시 400")
+    @DisplayName("POST /histories - 필드 누락 시 400")
     void saveMessage_missingField_shouldReturn400() throws Exception {
         String json = "{\"threadId\": 10, \"role\": \"user\"}"; // content 누락
 
-        mockMvc.perform(post("/api/v1/analysis/histories/save")
+        mockMvc.perform(post("/api/v1/analysis/histories")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest());
