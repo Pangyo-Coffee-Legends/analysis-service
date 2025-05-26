@@ -1,20 +1,16 @@
 package com.nhnacademy.workanalysis.controller;
 
 import com.nhnacademy.workanalysis.dto.*;
-import com.nhnacademy.workanalysis.entity.AiChatHistory;
-import com.nhnacademy.workanalysis.entity.AiChatThread;
+import com.nhnacademy.workanalysis.exception.ThreadTitleEmptyException;
 import com.nhnacademy.workanalysis.service.AiChatService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Gemini 기반의 AI 분석 및 대화 히스토리를 관리하는 컨트롤러입니다.
@@ -48,7 +44,7 @@ public class AnalysisController {
      * @return 생성된 쓰레드 DTO
      */
     @PostMapping("/threads")
-    public ResponseEntity<AiChatThreadDto> createThread(@RequestBody @Valid ThreadCreateRequest body) {
+    public ResponseEntity<AiChatThreadDto> createThread(@RequestBody @Valid AiChatThreadCreateRequest body) {
         Long mbNo = body.getMbNo();
         String title = body.getTitle();
 
@@ -66,8 +62,12 @@ public class AnalysisController {
      * @return 200 OK
      */
     @PutMapping("/threads/{id}")
-    public ResponseEntity<Void> updateThread(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        String title = body.get("title").toString();
+    public ResponseEntity<Void> updateThread(@PathVariable Long id, @RequestBody @Valid AiChatThreadTitleUpdateRequest body) {
+        String title = body.getTitle();
+        if (title == null || title.trim().isEmpty()) {
+            log.warn("{}번 쓰레드는 공백일 수 없습니다.",id);
+            throw new ThreadTitleEmptyException("쓰레드 제목 없음");
+        }
         log.info("✏️ [쓰레드 제목 수정] threadId={}, title={}", id, title);
         aiChatService.updateThreadTitle(id, title);
         return ResponseEntity.ok().build();
@@ -136,7 +136,7 @@ public class AnalysisController {
      *   "createdAt": "2025-05-22T13:35:00"
      * }
      */
-    @PostMapping("/histories/save")
+    @PostMapping("/histories")
     public ResponseEntity<AiChatHistoryDto> saveMessage(@RequestBody @Valid AiChatHistorySaveRequest request) {
         try {
             // 👉 content 값 실제 확인

@@ -73,7 +73,7 @@ class AnalysisControllerTest {
     @DisplayName("POST /threads - 쓰레드 생성")
     void createThread_success() throws Exception {
         AiChatThreadDto threadDto = new AiChatThreadDto(10L, 1L, "테스트 쓰레드", LocalDateTime.now());
-        ThreadCreateRequest req = new ThreadCreateRequest(1L, "테스트 쓰레드");
+        AiChatThreadCreateRequest req = new AiChatThreadCreateRequest(1L, "테스트 쓰레드");
 
         Mockito.when(aiChatService.createThread(1L, "테스트 쓰레드")).thenReturn(threadDto);
 

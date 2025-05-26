@@ -152,6 +152,19 @@ public class GlobalAdviceHandler {
         return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
                 .body("지원하지 않는 Content-Type입니다.");
     }
+
+    /**
+     * 쓰레드의 제목이 비어있을 경우 예외를 처리합니다.
+     * @param ex {@link ThreadTitleEmptyException}
+     * @return 400 Bad Request
+     */
+    @ExceptionHandler(ThreadTitleEmptyException.class)
+    public ResponseEntity<String> handleThreadTitleEmptyException(ThreadTitleEmptyException ex) {
+        log.warn("📛 쓰레드 제목 없음: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("쓰레드 제목은 비어 있을 수 없습니다: " + ex.getMessage());
+    }
+
     /**
      * 그 외 모든 예외 처리 핸들러입니다.
      *
