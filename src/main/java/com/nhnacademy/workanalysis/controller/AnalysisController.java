@@ -1,17 +1,26 @@
 package com.nhnacademy.workanalysis.controller;
 
+import com.nhnacademy.workanalysis.adaptor.MemberServiceClient;
 import com.nhnacademy.workanalysis.dto.*;
+import com.nhnacademy.workanalysis.dto.attendance.MemberInfoResponse;
+import com.nhnacademy.workanalysis.dto.report.AttendanceReportDto;
 import com.nhnacademy.workanalysis.exception.ThreadTitleEmptyException;
 import com.nhnacademy.workanalysis.exception.WorkEntryRecordNotFoundException;
+import com.nhnacademy.workanalysis.generator.PdfReportGenerator;
 import com.nhnacademy.workanalysis.service.AiChatService;
+import com.nhnacademy.workanalysis.service.report.ReportService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -24,7 +33,9 @@ import java.util.List;
 public class AnalysisController {
 
     private final AiChatService aiChatService;
-
+    private final ReportService reportService;
+    private final PdfReportGenerator pdfReportGenerator;
+    private final MemberServiceClient memberServiceClient;
     /**
      * 사용자의 프롬프트 메시지를 기반으로 Gemini 분석을 요청합니다.
      *
@@ -170,5 +181,30 @@ public class AnalysisController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
     }
+
+    // controller
+    @GetMapping("/reports/pdf")
+    public ResponseEntity<byte[]> downloadPdf(@RequestParam Long mbNo, @RequestParam int year, @RequestParam int month) {
+        // 사원 정보 조회
+        MemberInfoResponse member = memberServiceClient.getMemberByNo(mbNo);
+
+        // 리포트 생성 (실제 summary 내부에 포함된 날짜 기준으로 PDF 제목 지정)
+        AttendanceReportDto reportDto = reportService.generateAttendanceReport(mbNo, year, month);
+
+        // PDF 생성
+        byte[] pdfData = pdfReportGenerator.generateAttendancePdf(reportDto, member.getName(), reportDto.getYear(), reportDto.getMonth());
+
+        // 파일명 생성: OOO_근무_리포트_2025-05.pdf
+        String fileName = URLEncoder.encode(
+                String.format("%s_근무_리포트_%d-%02d.pdf", member.getName(), reportDto.getYear(), reportDto.getMonth()),
+                StandardCharsets.UTF_8
+        );
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + fileName)
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdfData);
+    }
+
 
 }
