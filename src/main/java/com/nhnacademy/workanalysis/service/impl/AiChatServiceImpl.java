@@ -1,9 +1,12 @@
 package com.nhnacademy.workanalysis.service.impl;
 
 import com.nhnacademy.workanalysis.adaptor.AiChatApiClient;
+import com.nhnacademy.workanalysis.adaptor.MemberServiceClient;
 import com.nhnacademy.workanalysis.adaptor.WorkEntryClient;
 import com.nhnacademy.workanalysis.dto.*;
 import com.nhnacademy.workanalysis.dto.attendance.AttendanceSummaryDto;
+import com.nhnacademy.workanalysis.dto.attendance.MemberInfoResponse;
+import com.nhnacademy.workanalysis.dto.attendance.MemberPageResponse;
 import com.nhnacademy.workanalysis.dto.attendance.PageResponse;
 import com.nhnacademy.workanalysis.entity.AiChatHistory;
 import com.nhnacademy.workanalysis.entity.AiChatThread;
@@ -39,25 +42,28 @@ public class AiChatServiceImpl implements AiChatService {
     private final AiChatThreadRepository aiChatThreadRepository;
     private final AiChatHistoryRepository aiChatHistoryRepository;
     private final WorkEntryClient workEntryClient;
+    private final MemberServiceClient memberServiceClient;
 
     private static final Map<String, String> STATUS_CODE_MAP = Map.of(
             "1", "출근", "2", "지각", "3", "결근", "4", "외근",
             "5", "연차", "6", "질병", "7", "반차", "8", "상"
     );
 
-    /**
-     * 리포트 생성을 위한 AI 분석 요청을 수행하고 결과를 파일로 저장합니다.
-     *
-     * @param request 리포트 요청 DTO
-     * @return 분석 결과
-     */
     @Override
     public GeminiAnalysisResponse generateReport(ReportRequestDto request) {
         Long mbNo = request.getMbNo();
         Integer year = request.getYear();
         Integer month = request.getMonth();
 
-        // 출결 요약 데이터 조회 (30일간)
+        // 1. 이름 조회
+        MemberPageResponse memberPage = memberServiceClient.getMemberInfoList(0, 1000); // 충분히 큰 size
+        String mbName = memberPage.getContent().stream()
+                .filter(m -> m.getNo().equals(mbNo))
+                .map(MemberInfoResponse::getName)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("해당 사원을 찾을 수 없습니다."));
+
+        // 2. 출결 요약 조회
         PageResponse<AttendanceSummaryDto> pageResponse = workEntryClient.getRecent30DaySummary(mbNo);
 
         List<WorkRecordDto> workRecords = pageResponse.getContent().stream()
@@ -75,17 +81,16 @@ public class AiChatServiceImpl implements AiChatService {
             throw new WorkEntryRecordNotFoundException(mbNo, year, month);
         }
 
+        // 3. 메시지에 이름 사용
         List<MessageDto> messages = List.of(
-                new MessageDto("user", String.format("%d번 사원의 %d년 %d월 근무 기록 요약을 요청합니다.", mbNo, year, month)),
+                new MessageDto("user", String.format("%s 사원의 %d년 %d월 근무 기록 요약을 요청합니다.", mbName, year, month)),
                 new MessageDto("user", formatRecordsToPrompt(workRecords))
         );
 
         GeminiAnalysisRequest analysisRequest = new GeminiAnalysisRequest(mbNo, messages, workRecords);
-        GeminiAnalysisResponse result = analyze(analysisRequest);
-        saveReportAsTextFile(mbNo, year, month, result.getFullText());
-
-        return result;
+        return analyze(analysisRequest);
     }
+
 
     /**
      * 출근 혹은 퇴근 시간 기준으로 요일을 추출합니다.
@@ -116,19 +121,6 @@ public class AiChatServiceImpl implements AiChatService {
         return sb.toString();
     }
 
-    /**
-     * 분석 결과를 파일로 저장합니다.
-     */
-    private void saveReportAsTextFile(Long mbNo, int year, int month, String content) {
-        try {
-            String fileName = String.format("report_mb_%d_%04d_%02d.txt", mbNo, year, month);
-            Path path = Path.of("/tmp", fileName);
-            Files.writeString(path, content);
-            log.info("📂 리포트 저장 완료: {}", path);
-        } catch (IOException e) {
-            log.warn("⚠️ 리포트 저장 실패: {}", e.getMessage());
-        }
-    }
 
     @Override
     public GeminiAnalysisResponse analyze(GeminiAnalysisRequest request) {
