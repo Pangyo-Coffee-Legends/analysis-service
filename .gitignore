@@ -37,6 +37,6 @@ mvnw
 *.cmd
 
 # application.properties 무시
-*.properties
 logs
+src/main/resources/application-prod.properties
 .env
