@@ -45,6 +45,7 @@ jobs:
           target: "~/analysis-service/target"
           strip_components: 1
           overwrite: true
+
       # 3. startup.sh 실행
       - name: Execute startup script
         uses: appleboy/ssh-action@master
