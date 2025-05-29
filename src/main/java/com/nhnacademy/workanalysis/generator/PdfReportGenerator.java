@@ -39,10 +39,10 @@ public class PdfReportGenerator {
     /**
      * 근태 데이터를 기반으로 PDF 형식의 리포트를 생성합니다.
      *
-     * @param reportDto 근태 상태별 일수 통계가 담긴 DTO
+     * @param reportDto  근태 상태별 일수 통계가 담긴 DTO
      * @param memberName 사원의 이름
-     * @param year 리포트를 생성할 연도
-     * @param month 리포트를 생성할 월
+     * @param year       리포트를 생성할 연도
+     * @param month      리포트를 생성할 월
      * @return 생성된 PDF 문서의 바이트 배열
      * @throws PdfReportGenerationException PDF 생성 중 오류가 발생할 경우 발생
      */
@@ -87,14 +87,14 @@ public class PdfReportGenerator {
 
         } catch (Exception e) {
             log.error("❌ PDF 리포트 생성 실패: 사용자={}, 연도={}, 월={}, 원인={}", memberName, year, month, e.getMessage(), e);
-            throw new PdfReportGenerationException("PDF 리포트 생성 중 오류 발생",e);
+            throw new PdfReportGenerationException("PDF 리포트 생성 중 오류 발생", e);
         }
     }
 
     /**
      * PDF 테이블의 헤더 셀을 생성합니다.
      *
-     * @param text 셀에 표시할 텍스트
+     * @param text     셀에 표시할 텍스트
      * @param baseFont 사용할 기본 폰트 (한글 지원)
      * @return 가운데 정렬된 회색 배경의 헤더 셀
      */
@@ -107,10 +107,11 @@ public class PdfReportGenerator {
         cell.setPadding(10f);
         return cell;
     }
+
     /**
      * PDF 테이블의 바디(내용) 셀을 생성합니다.
      *
-     * @param text 셀에 표시할 텍스트
+     * @param text     셀에 표시할 텍스트
      * @param baseFont 사용할 기본 폰트
      * @return 가운데 정렬된 일반 셀
      */
@@ -122,6 +123,7 @@ public class PdfReportGenerator {
         cell.setPadding(8f);
         return cell;
     }
+
     /**
      * 근태 상태 코드(Long)를 한글 라벨로 변환합니다.
      *
@@ -142,6 +144,7 @@ public class PdfReportGenerator {
             default -> "기타";
         };
     }
+
     /**
      * 근태 상태 코드에 해당하는 색상을 반환합니다.
      *
@@ -168,7 +171,7 @@ public class PdfReportGenerator {
      * 항목 수에 따라 막대 너비를 자동 조정합니다.
      *
      * @param codeCountMap 근태 코드별 출현 일수 맵
-     * @param baseFont PDF 폰트 렌더링에 사용할 기본 폰트
+     * @param baseFont     PDF 폰트 렌더링에 사용할 기본 폰트
      * @return 생성된 바 차트 이미지 객체
      * @throws Exception 이미지 생성 중 오류 발생 시
      */

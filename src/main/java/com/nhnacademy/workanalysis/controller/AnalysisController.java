@@ -168,6 +168,13 @@ public class AnalysisController {
         }
     }
 
+    /**
+     * 사용자가 요청한 조건(mbNo, year, month, 상태코드)으로 근태 분석 리포트를 생성합니다.
+     *
+     * @param request 리포트 요청에 필요한 조건을 담은 DTO
+     * @return 생성된 분석 결과 응답(JSON)
+     * @throws ResponseStatusException 출결 기록이 존재하지 않을 경우 404 오류 반환
+     */
 
     @PostMapping("/reports")
     public ResponseEntity<GeminiAnalysisResponse> generateAttendanceReport(@RequestBody @Valid ReportRequestDto request) {
@@ -182,7 +189,15 @@ public class AnalysisController {
         }
     }
 
-    // controller
+
+    /**
+     * 특정 사원의 특정 월 근태 데이터를 기반으로 PDF 리포트를 생성하여 다운로드합니다.
+     *
+     * @param mbNo 사원 번호
+     * @param year 리포트 생성 연도
+     * @param month 리포트 생성 월
+     * @return PDF 파일 바이트 및 응답 헤더 포함한 ResponseEntity
+     */
     @GetMapping("/reports/pdf")
     public ResponseEntity<byte[]> downloadPdf(@RequestParam Long mbNo, @RequestParam int year, @RequestParam int month) {
         // 사원 정보 조회
