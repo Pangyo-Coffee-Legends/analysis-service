@@ -2,6 +2,7 @@ package com.nhnacademy.workanalysis.exception;
 
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -31,7 +32,7 @@ public class GlobalAdviceHandler {
      * @return 404 Not Found 응답
      */
     @ExceptionHandler(AiChatThreadNotFoundException.class)
-    public ResponseEntity<String> handleThreadNotFoundException(AiChatThreadNotFoundException ex) {
+    public ResponseEntity<String> handleThreadNotFoundException(@NotNull AiChatThreadNotFoundException ex) {
         log.warn("ThreadNotFoundException 발생: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body("쓰레드를 찾을 수 없습니다: " + ex.getMessage());
@@ -175,6 +176,20 @@ public class GlobalAdviceHandler {
         log.warn("📭 출결 기록 없음: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
+
+    /**
+     * PDF 리포트 생성 중 오류 발생 시 예외를 처리합니다.
+     *
+     * @param ex {@link PdfReportGenerationException}
+     * @return 500 Internal Server Error
+     */
+    @ExceptionHandler(PdfReportGenerationException.class)
+    public ResponseEntity<String> handlePdfReportGenerationException(PdfReportGenerationException ex) {
+        log.error("📄 PDF 리포트 생성 오류: {}", ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("PDF 리포트를 생성하는 중 오류가 발생했습니다: " + ex.getMessage());
+    }
+
 
     /**
      * 그 외 모든 예외 처리 핸들러입니다.
