@@ -129,7 +129,7 @@ class AnalysisControllerTest {
 
         Mockito.when(aiChatService.saveHistory(10L, "user", "내용")).thenReturn(saved);
 
-        mockMvc.perform(post("/api/v1/analysis/histories/save")
+        mockMvc.perform(post("/api/v1/analysis/histories")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
@@ -141,7 +141,7 @@ class AnalysisControllerTest {
     void saveMessage_missingField_shouldReturn400() throws Exception {
         String json = "{\"threadId\": 10, \"role\": \"user\"}"; // content 누락
 
-        mockMvc.perform(post("/api/v1/analysis/histories/save")
+        mockMvc.perform(post("/api/v1/analysis/histories")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest());
