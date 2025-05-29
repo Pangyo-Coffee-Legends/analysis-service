@@ -2,7 +2,7 @@ name: analysis-service CI/CD
 
 on:
   push:
-    branches: [ "main","dev" ]
+    branches: ["main","dev"]
 
 jobs:
   build:
