@@ -184,7 +184,7 @@ public class PdfReportGenerator {
         g.fillRect(0, 0, width, height);
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        g.setFont(new java.awt.Font("SansSerif", Font.BOLD, 16));
+        g.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 16));
         String title = "근태 상태별 일수 분포";
         g.setColor(Color.BLACK);
         g.drawString(title, (width - g.getFontMetrics().stringWidth(title)) / 2, 25);
