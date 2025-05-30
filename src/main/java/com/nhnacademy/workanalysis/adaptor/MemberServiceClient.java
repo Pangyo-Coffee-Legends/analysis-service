@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  *     <li>특정 회원 번호로 회원 상세 정보 조회</li>
  * </ul>
  */
-@FeignClient(name = "member-service", url = "${member.service.url}")
+@FeignClient(name = "member-service", url = "${member.service.url}",path = "/api/v1/members")
 public interface MemberServiceClient {
 
     /**
@@ -26,15 +26,18 @@ public interface MemberServiceClient {
      * @param size 한 페이지당 회원 수
      * @return 회원 목록 및 페이징 정보가 포함된 {@link MemberPageResponse}
      */
-    @GetMapping("/api/v1/members")
+    @GetMapping
     MemberPageResponse getMemberInfoList(@RequestParam int page, @RequestParam int size);
 
     /**
-     * 회원 고유 번호(mbNo)를 기반으로 해당 회원의 상세 정보를 조회합니다.
+     * 회원 고유 번호(mbNo)를 기반으로 회원 정보를 조회합니다.
+     * 요청 파라미터 `view`를 통해 요약 또는 상세 보기 여부를 지정할 수 있습니다.
      *
      * @param mbNo 회원 번호
-     * @return 회원 상세 정보가 포함된 {@link MemberInfoResponse}
+     * @param view 조회 형식 ("summary" 또는 "detailed")
+     * @return {@link MemberInfoResponse}형태의 정보가 응답됩니다.
      */
-    @GetMapping("/api/v1/members/{mbNo}/info")
-    MemberInfoResponse getMemberByNo(@PathVariable("mbNo") Long mbNo);
+    @GetMapping("/{mbNo}")
+    MemberInfoResponse getMemberByNo(@PathVariable("mbNo") Long mbNo,
+                         @RequestParam(defaultValue = "detailed") String view);
 }

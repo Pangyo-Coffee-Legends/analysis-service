@@ -1,6 +1,6 @@
 package com.nhnacademy.workanalysis.dto.attendance;
 
-import lombok.Data;
+import lombok.Value;
 
 import java.util.List;
 
@@ -9,26 +9,26 @@ import java.util.List;
  *
  * <p>회원 정보 리스트, 전체 페이지 수, 전체 항목 수, 현재 페이지 번호 등의 정보를 포함합니다.</p>
  */
-@Data
+@Value
 public class MemberPageResponse {
 
     /**
      * 현재 페이지에 포함된 회원 정보 리스트
      */
-    private List<MemberInfoResponse> content;
+    List<MemberInfoResponse> content;
 
     /**
      * 전체 페이지 수
      */
-    private int totalPages;
+    int totalPages;
 
     /**
      * 전체 회원 수 (모든 페이지 기준)
      */
-    private long totalElements;
+    long totalElements;
 
     /**
      * 현재 페이지 번호 (0부터 시작)
      */
-    private int pageNumber;
+    int pageNumber;
 }

@@ -201,7 +201,8 @@ public class AnalysisController {
     @GetMapping("/reports/pdf")
     public ResponseEntity<byte[]> downloadPdf(@RequestParam Long mbNo, @RequestParam int year, @RequestParam int month) {
         // 사원 정보 조회
-        MemberInfoResponse member = memberServiceClient.getMemberByNo(mbNo);
+        MemberInfoResponse member = (MemberInfoResponse) memberServiceClient.getMemberByNo(mbNo, "summary");
+
 
         // 리포트 생성 (실제 summary 내부에 포함된 날짜 기준으로 PDF 제목 지정)
         AttendanceReportDto reportDto = reportService.generateAttendanceReport(mbNo, year, month);

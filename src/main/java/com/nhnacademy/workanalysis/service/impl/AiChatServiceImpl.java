@@ -192,7 +192,7 @@ public class AiChatServiceImpl implements AiChatService {
         log.warn("쓰레드 삭제 요청 - threadId: {}", threadId);
         if (!aiChatThreadRepository.existsById(threadId)) {
             log.error("존재하지 않는 쓰레드 삭제 시도 - threadId: {}", threadId);
-            throw new AiChatThreadNotFoundException("삭제할 쓰레드가 존재하지 않습니다.");
+            throw new AiChatThreadNotFoundException();
         }
         aiChatThreadRepository.deleteById(threadId);
     }
