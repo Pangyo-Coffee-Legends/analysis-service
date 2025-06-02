@@ -48,8 +48,8 @@ public class ReportServiceImpl implements ReportService {
                 .toList();
 
         if (filtered.isEmpty()) {
-            log.warn("⚠️ 사원 {}의 {}년 {}월에 대한 출결 기록이 존재하지 않습니다.", mbNo, year, month);
-            throw new WorkEntryRecordNotFoundException(mbNo, year, month);
+            log.warn("⚠️ 사원 {}의 {}년 {}월에 대한 출결 기록이 존재하지 않습니다.",mbNo,year,month);
+            throw new WorkEntryRecordNotFoundException("출결 데이터 없음");
         }
 
         log.info("✅ {}건의 출결 기록이 필터링되었습니다.", filtered.size());

@@ -1,5 +1,6 @@
 package com.nhnacademy.workanalysis.dto.attendance;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.List;
  * @param <T> 페이지 항목의 타입
  */
 @Data
+@AllArgsConstructor
 public class PageResponse<T> {
 
     /**

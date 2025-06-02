@@ -10,7 +10,6 @@ import lombok.Value;
  * Gemini 분석 요청에 대한 응답 결과를 담는 DTO 클래스입니다.
  */
 @Value
-@AllArgsConstructor
 public class GeminiAnalysisResponse {
 
     /**

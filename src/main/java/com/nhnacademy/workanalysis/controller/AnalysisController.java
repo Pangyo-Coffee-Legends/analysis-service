@@ -4,6 +4,7 @@ import com.nhnacademy.workanalysis.adaptor.MemberServiceClient;
 import com.nhnacademy.workanalysis.dto.*;
 import com.nhnacademy.workanalysis.dto.attendance.MemberInfoResponse;
 import com.nhnacademy.workanalysis.dto.report.AttendanceReportDto;
+import com.nhnacademy.workanalysis.exception.GlobalAdviceHandler;
 import com.nhnacademy.workanalysis.exception.ThreadTitleEmptyException;
 import com.nhnacademy.workanalysis.exception.WorkEntryRecordNotFoundException;
 import com.nhnacademy.workanalysis.generator.PdfReportGenerator;
@@ -170,24 +171,34 @@ public class AnalysisController {
 
     /**
      * 사용자가 요청한 조건(mbNo, year, month, 상태코드)으로 근태 분석 리포트를 생성합니다.
+     * <p>
+     * 분석 도중 출결 데이터가 존재하지 않을 경우 {@link WorkEntryRecordNotFoundException}
+     * 예외가 발생하며, 이는 {@link GlobalAdviceHandler}에서 처리되어
+     * HTTP 404 응답으로 반환됩니다.
      *
-     * @param request 리포트 요청에 필요한 조건을 담은 DTO
-     * @return 생성된 분석 결과 응답(JSON)
-     * @throws ResponseStatusException 출결 기록이 존재하지 않을 경우 404 오류 반환
+     * @param request 리포트 요청에 필요한 조건(mbNo, year, month, 상태코드)을 담은 DTO
+     * @return 생성된 분석 결과를 포함한 응답(JSON 형식)
      */
 
     @PostMapping("/reports")
     public ResponseEntity<GeminiAnalysisResponse> generateAttendanceReport(@RequestBody @Valid ReportRequestDto request) {
+        // 1. 사원 정보 확인 (FeignClient 통해 요약 조회)
         try {
-            log.info("📝 [리포트 생성 요청] mbNo={}, year={}, month={}, codes={}",
-                    request.getMbNo(), request.getYear(), request.getMonth(), request.getStatusCodes());
-
-            GeminiAnalysisResponse response = aiChatService.generateReport(request);
-            return ResponseEntity.ok(response);
-        } catch (WorkEntryRecordNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+            MemberInfoResponse member = memberServiceClient.getMemberByNo(request.getMbNo(), "summary");
+        } catch (Exception e) {
+            log.warn("해당 사원을 찾을 수 없습니다: mbNo={}", request.getMbNo());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 사원을 찾을 수 없습니다.");
         }
+
+        // 2. 리포트 생성
+        GeminiAnalysisResponse response = aiChatService.generateReport(request);
+
+        // 3. 응답 반환
+        return ResponseEntity.ok(response);
     }
+
+
+
 
 
     /**
@@ -201,7 +212,7 @@ public class AnalysisController {
     @GetMapping("/reports/pdf")
     public ResponseEntity<byte[]> downloadPdf(@RequestParam Long mbNo, @RequestParam int year, @RequestParam int month) {
         // 사원 정보 조회
-        MemberInfoResponse member = (MemberInfoResponse) memberServiceClient.getMemberByNo(mbNo, "summary");
+        MemberInfoResponse member = memberServiceClient.getMemberByNo(mbNo, "summary");
 
 
         // 리포트 생성 (실제 summary 내부에 포함된 날짜 기준으로 PDF 제목 지정)

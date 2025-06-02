@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
  * 엔티티를 직접 노출하지 않고 필요한 정보만 전달합니다.
  */
 @Value
-@AllArgsConstructor
 public class AiChatThreadDto {
 
     /**

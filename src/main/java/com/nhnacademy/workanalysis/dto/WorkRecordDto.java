@@ -9,8 +9,6 @@ import lombok.Value;
  * 프롬프트 생성 시 템플릿으로 사용됩니다.
  */
 @Value
-
-@AllArgsConstructor
 public class WorkRecordDto {
     /**
      * 근무 일자 (예: "2025-05-19")

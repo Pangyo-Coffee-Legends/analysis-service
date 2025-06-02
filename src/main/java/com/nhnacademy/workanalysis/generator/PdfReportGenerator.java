@@ -190,6 +190,14 @@ public class PdfReportGenerator {
         g.drawString(title, (width - g.getFontMetrics().stringWidth(title)) / 2, 25);
 
         g.setFont(new java.awt.Font(baseFont.getPostscriptFontName(), java.awt.Font.PLAIN, 14));
+
+        // ✅방어 코드: 값이 없거나 전부 0이면 예외 발생
+        long totalCount = codeCountMap.values().stream().mapToLong(Long::longValue).sum();
+        if (totalCount == 0) {
+            g.dispose();
+            throw new PdfReportGenerationException("근태 데이터가 없어 바 차트를 생성할 수 없습니다.");
+        }
+
         int max = codeCountMap.values().stream().mapToInt(Long::intValue).max().orElse(1);
         int itemCount = codeCountMap.size();
 
@@ -227,6 +235,7 @@ public class PdfReportGenerator {
         g.dispose();
         return Image.getInstance(chart, null);
     }
+
 
 
     /**

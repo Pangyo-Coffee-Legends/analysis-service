@@ -2,6 +2,7 @@ package com.nhnacademy.workanalysis.dto;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.List;
  * 사원별 리포트 생성을 위한 요청 DTO
  */
 @Data
+@AllArgsConstructor
 public class ReportRequestDto {
 
     @NotNull(message = "사원 번호는 필수입니다.")

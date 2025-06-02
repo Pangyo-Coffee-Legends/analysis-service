@@ -13,7 +13,7 @@ public class MemberInfoResponse {
     /**
      * 회원 고유 번호 (PK)
      */
-    Long no;
+    Long mbNo;
 
     /**
      * 회원 이름

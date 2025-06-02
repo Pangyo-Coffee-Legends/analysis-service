@@ -39,6 +39,5 @@ mvnw
 
 #  무시
 src/main/resources/application-prod.properties
-
 logs/
 .env

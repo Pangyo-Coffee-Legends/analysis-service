@@ -10,7 +10,8 @@ import org.springframework.messaging.handler.annotation.support.MethodArgumentTy
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
 import java.util.List;
@@ -50,17 +51,18 @@ public class GlobalAdviceHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body("요청이 올바르지 않습니다: " + ex.getMessage());
     }
+
     /**
      * TextNotFoundException 처리 핸들러입니다.
      * Gemini API 응답 JSON 내에 분석 결과 텍스트가 존재하지 않을 경우 발생합니다.
-     *
+     * <p>
      * 사용된 상태 코드 설명
      * HttpStatus.UNPROCESSABLE_ENTITY (422)는 요청은 문법적으로 올바르나,
      * 서버가 의미 있는 응답을 생성할 수 없는 경우에 사용됩니다. 분석 결과가 JSON에는 있으나 필요한 필드가 없을 때 적절합니다.
      *
-     * @see <a href="https://developer.mozilla.org/ko/docs/Web/HTTP/Status/422">...</a>
      * @param ex TextNotFoundException 예외 객체
      * @return 422 Unprocessable Entity 응답
+     * @see <a href="https://developer.mozilla.org/ko/docs/Web/HTTP/Status/422">...</a>
      */
     @ExceptionHandler(TextNotFoundException.class)
     public ResponseEntity<String> handleTextNotFoundException(TextNotFoundException ex) {
@@ -68,6 +70,7 @@ public class GlobalAdviceHandler {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body("분석 결과 텍스트를 찾을 수 없습니다: " + ex.getMessage());
     }
+
     /**
      * 유효성 검사(@Valid) 실패 시 발생하는 예외 처리기입니다.
      *
@@ -156,6 +159,7 @@ public class GlobalAdviceHandler {
 
     /**
      * 쓰레드의 제목이 비어있을 경우 예외를 처리합니다.
+     *
      * @param ex {@link ThreadTitleEmptyException}
      * @return 400 Bad Request
      */
@@ -168,13 +172,28 @@ public class GlobalAdviceHandler {
 
     /**
      * 근무기록을 찾지 못할 경우 예외를 처리합니다.
+     *
      * @param ex {@link WorkEntryRecordNotFoundException}
      * @return 404 Not Found
      */
     @ExceptionHandler(WorkEntryRecordNotFoundException.class)
     public ResponseEntity<String> handleWorkEntryRecordNotFound(WorkEntryRecordNotFoundException ex) {
-        log.warn("📭 출결 기록 없음: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("출결 데이터 없음");
+    }
+
+    /**
+     * 요청한 사원을 찾을 수 없는 경우 발생하는 예외를 처리합니다.
+     *
+     * @param ex {@link MemberNotFoundException} 예외 인스턴스
+     * @return 404 Not Found 상태 코드와 오류 메시지를 포함한 {@link ResponseEntity}
+     */
+
+
+    @ExceptionHandler(MemberNotFoundException.class)
+    public ResponseEntity<String> handleMemberNotFoundException(MemberNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("해당번호에 맴버는 존재하지 않습니다ㅣ" + ex.getMessage());
     }
 
     /**
@@ -203,7 +222,4 @@ public class GlobalAdviceHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("서버 내부 오류가 발생했습니다. 관리자에게 문의해주세요.");
     }
-
-
-
 }

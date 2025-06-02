@@ -11,6 +11,7 @@ import com.nhnacademy.workanalysis.dto.attendance.PageResponse;
 import com.nhnacademy.workanalysis.entity.AiChatHistory;
 import com.nhnacademy.workanalysis.entity.AiChatThread;
 import com.nhnacademy.workanalysis.exception.AiChatThreadNotFoundException;
+import com.nhnacademy.workanalysis.exception.MemberNotFoundException;
 import com.nhnacademy.workanalysis.exception.WorkEntryRecordNotFoundException;
 import com.nhnacademy.workanalysis.repository.AiChatHistoryRepository;
 import com.nhnacademy.workanalysis.repository.AiChatThreadRepository;
@@ -67,13 +68,17 @@ public class AiChatServiceImpl implements AiChatService {
 
         log.debug("[generateReport] 분석 대상 - mbNo: {}, year: {}, month: {}", mbNo, year, month);
 
-        MemberPageResponse memberPage = memberServiceClient.getMemberInfoList(0, 1000);
-        String mbName = memberPage.getContent().stream()
-                .filter(m -> m.getNo().equals(mbNo))
-                .map(MemberInfoResponse::getName)
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("해당 사원을 찾을 수 없습니다."));
+        // [수정] 사원 이름 단건 조회 (summary view)
+        String mbName;
+        try {
+            MemberInfoResponse member = memberServiceClient.getMemberByNo(mbNo, "summary");
+            mbName = member.getName();
+        } catch (Exception e) {
+            log.warn("해당 사원을 찾을 수 없습니다 - mbNo: {}", mbNo);
+            throw new MemberNotFoundException("해당 사원을 찾을 수 없습니다.");
+        }
 
+        // 출결 데이터 조회
         PageResponse<AttendanceSummaryDto> pageResponse = workEntryClient.getRecent30DaySummary(mbNo);
         List<WorkRecordDto> workRecords = pageResponse.getContent().stream()
                 .filter(s -> s.getYear() == year && s.getMonthValue() == month)
@@ -88,7 +93,7 @@ public class AiChatServiceImpl implements AiChatService {
 
         if (workRecords.isEmpty()) {
             log.warn("근무 기록 없음 - mbNo: {}, year: {}, month: {}", mbNo, year, month);
-            throw new WorkEntryRecordNotFoundException(mbNo, year, month);
+            throw new WorkEntryRecordNotFoundException("근무기록없음");
         }
 
         log.info("Gemini 분석용 프롬프트 생성 시작 - 데이터 {}건", workRecords.size());
@@ -101,6 +106,7 @@ public class AiChatServiceImpl implements AiChatService {
         GeminiAnalysisRequest analysisRequest = new GeminiAnalysisRequest(mbNo, messages, workRecords);
         return analyze(analysisRequest);
     }
+
 
     /**
      * 출/퇴근 시간 중 유효한 시간으로 요일을 구합니다.
