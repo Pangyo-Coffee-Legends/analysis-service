@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Value;
 
 import java.time.LocalDateTime;
 
@@ -12,25 +12,25 @@ import java.time.LocalDateTime;
  * AI 대화 히스토리 정보를 전달하기 위한 DTO(Data Transfer Object) 클래스입니다.
  * 프론트엔드에 반환될 응답 형태로, 엔티티로부터 필요한 데이터만 추출하여 전송합니다.
  */
-@Data
+@Value
 @AllArgsConstructor
 public class AiChatHistoryDto {
 
     @NotNull
-    private Long historyId;
+    Long historyId;
 
     /**
      * 대화 참여자의 역할입니다.
      * 예: "user", "assistant"
      */
     @NotBlank
-    private String role;
+    String role;
 
     /**
      * 실제 대화 메시지 내용입니다.
      */
     @NotBlank
-    private String content;
+    String content;
 
     /**
      * 메시지가 생성된 시간입니다.
@@ -38,5 +38,5 @@ public class AiChatHistoryDto {
      */
     @NotNull
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime createdAt;
+    LocalDateTime createdAt;
 }

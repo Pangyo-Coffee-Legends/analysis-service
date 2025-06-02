@@ -83,4 +83,7 @@ public interface AiChatService {
      * @return 저장된 히스토리 DTO 객체
      */
     AiChatHistoryDto saveValidatedMessage(AiChatHistorySaveRequest request);
+
+    GeminiAnalysisResponse generateReport(ReportRequestDto request);
+
 }

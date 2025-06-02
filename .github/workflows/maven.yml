@@ -2,7 +2,7 @@ name: analysis-service CI/CD
 
 on:
   push:
-    branches: [ "main","dev" ]
+    branches: ["main","dev"]
 
 jobs:
   build:
@@ -57,3 +57,5 @@ jobs:
           script: |
             chmod +x ~/analysis-service/startup.sh
             cd ~/analysis-service && ./startup.sh
+
+  
