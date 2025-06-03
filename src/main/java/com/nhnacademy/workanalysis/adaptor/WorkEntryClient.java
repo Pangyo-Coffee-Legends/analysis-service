@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
  * {@link AttendanceSummaryDto} 객체 리스트를 포함하는 페이징 응답 {@link PageResponse} 형태로 반환받습니다.
  * </p>
  */
-@FeignClient(name = "work-entry-service", url = "${work.entry.service.url}", path = "/api/v1/attendances")
+@FeignClient(name = "work-entry-service", path = "/api/v1/attendances")
 public interface WorkEntryClient {
 
     /**

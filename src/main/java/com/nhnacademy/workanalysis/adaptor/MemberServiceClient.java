@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  *     <li>특정 회원 번호로 회원 상세 정보 조회</li>
  * </ul>
  */
-@FeignClient(name = "member-service", url = "${member.service.url}",path = "/api/v1/members")
+@FeignClient(name = "member-service", path = "/api/v1/members")
 public interface MemberServiceClient {
 
     /**
