@@ -24,7 +24,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @SpringBootTest
 @TestPropertySource(properties = {
-        "work.entry.service.url=http://localhost:8082"
+        "work.entry.service.url=http://localhost:8082",
+        "member.service.url=http://localhost:8081", // 여기가 반드시 필요
+        "gemini.api.key=dummy-key" // 이 값도 필요할 수 있음
 })
 @Import(FeignTestConfig.class)
 class WorkEntryClientTest {

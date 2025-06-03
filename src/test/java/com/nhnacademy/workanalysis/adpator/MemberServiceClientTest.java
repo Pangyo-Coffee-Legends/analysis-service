@@ -22,7 +22,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @SpringBootTest
 @TestPropertySource(properties = {
-        "member.service.url=http://localhost:8081"
+        "work.entry.service.url=http://localhost:8082",
+        "member.service.url=http://localhost:8081",
+        "gemini.api.key=dummy-key-for-test"
 })
 @Import(FeignTestConfig.class) // JSON 직렬화/역직렬화 관련 설정 분리
 class MemberServiceClientTest {

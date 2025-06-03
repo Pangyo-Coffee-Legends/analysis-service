@@ -11,6 +11,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.TestPropertySource;
 
 import java.util.List;
 
@@ -32,7 +33,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  * {@link TestConfiguration}을 통해 명시적으로 설정합니다.
  */
 @DataJpaTest
-@Import(AiChatThreadRepositoryTest.QueryDslTestConfig.class) // ✅ QueryDSL 설정 수동 주입
+@Import(AiChatThreadRepositoryTest.QueryDslTestConfig.class)
+@TestPropertySource(properties = {
+        "member.service.url=http://localhost:8080",
+        "work.entry.service.url=http://localhost:8081"
+})
+// ✅ QueryDSL 설정 수동 주입
 class AiChatThreadRepositoryTest {
 
     @Autowired
