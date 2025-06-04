@@ -17,8 +17,8 @@ import org.springframework.stereotype.Component;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.util.List;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -26,8 +26,8 @@ import java.util.Map;
 public class PdfReportGenerator {
 
     private static final String DEFAULT_FONT_PATH = "classpath:font/NotoSansKR-Regular.ttf";
-
     private final ResourceLoader resourceLoader;
+    private java.awt.Font awtKoreanFont; // AWT용 폰트 (차트용)
 
     public PdfReportGenerator(ResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
@@ -39,25 +39,29 @@ public class PdfReportGenerator {
             PdfWriter.getInstance(document, out);
             document.open();
 
-            // ✅ classpath 내 폰트 파일 로드
+            // 📌 폰트 로드 (BaseFont + AWT Font 등록)
             Resource fontResource = resourceLoader.getResource(DEFAULT_FONT_PATH);
             File tempFontFile = File.createTempFile("tempFont", ".ttf");
             try (InputStream is = fontResource.getInputStream();
                  OutputStream os = new FileOutputStream(tempFontFile)) {
                 is.transferTo(os);
             }
-            BaseFont baseFont = BaseFont.createFont(
-                    tempFontFile.getAbsolutePath(),  // ✅ 문자열 경로 전달
-                    BaseFont.IDENTITY_H,
-                    BaseFont.EMBEDDED
-            );
-            Font titleFont = new Font(baseFont, 18, Font.BOLD);
 
+            // iText용 BaseFont
+            BaseFont baseFont = BaseFont.createFont(tempFontFile.getAbsolutePath(), BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+
+            // AWT용 java.awt.Font 등록
+            awtKoreanFont = java.awt.Font.createFont(java.awt.Font.TRUETYPE_FONT, tempFontFile).deriveFont(14f);
+            GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(awtKoreanFont);
+
+            // 제목
+            Font titleFont = new Font(baseFont, 18, Font.BOLD);
             Paragraph title = new Paragraph(String.format("근태 리포트 %d년 %02d월 (%s 사원)", year, month, memberName), titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
             title.setSpacingAfter(15f);
             document.add(title);
 
+            // 요약 테이블
             PdfPTable summaryTable = new PdfPTable(2);
             summaryTable.setWidths(new int[]{2, 1});
             summaryTable.setWidthPercentage(100);
@@ -71,7 +75,8 @@ public class PdfReportGenerator {
             }
             document.add(summaryTable);
 
-            Image barChart = createBarChartImage(reportDto.getStatusCountMap(), baseFont);
+            // 차트 추가
+            Image barChart = createBarChartImage(reportDto.getStatusCountMap());
             barChart.scaleToFit(520f, 240f);
             document.add(barChart);
 
@@ -88,14 +93,6 @@ public class PdfReportGenerator {
         }
     }
 
-    /**
-     * PDF 테이블의 헤더 셀을 생성합니다.
-     *
-     * @param text     셀에 표시할 텍스트
-     * @param baseFont 사용할 기본 폰트 (한글 지원)
-     * @return 가운데 정렬된 회색 배경의 헤더 셀
-     */
-
     private PdfPCell makeHeaderCell(String text, BaseFont baseFont) {
         Font font = new Font(baseFont, 13, Font.BOLD);
         PdfPCell cell = new PdfPCell(new Phrase(text, font));
@@ -105,14 +102,6 @@ public class PdfReportGenerator {
         return cell;
     }
 
-    /**
-     * PDF 테이블의 바디(내용) 셀을 생성합니다.
-     *
-     * @param text     셀에 표시할 텍스트
-     * @param baseFont 사용할 기본 폰트
-     * @return 가운데 정렬된 일반 셀
-     */
-
     private PdfPCell makeBodyCell(String text, BaseFont baseFont) {
         Font font = new Font(baseFont, 12);
         PdfPCell cell = new PdfPCell(new Phrase(text, font));
@@ -120,13 +109,6 @@ public class PdfReportGenerator {
         cell.setPadding(8f);
         return cell;
     }
-
-    /**
-     * 근태 상태 코드(Long)를 한글 라벨로 변환합니다.
-     *
-     * @param code 근태 코드 (예: 1=출근, 2=지각, ...)
-     * @return 근태 코드에 대응하는 한글 라벨 문자열
-     */
 
     private String mapCodeToLabel(Long code) {
         return switch (code.intValue()) {
@@ -142,13 +124,6 @@ public class PdfReportGenerator {
         };
     }
 
-    /**
-     * 근태 상태 코드에 해당하는 색상을 반환합니다.
-     *
-     * @param code 근태 코드
-     * @return 해당 코드에 대응하는 {@link Color} 객체
-     */
-
     private Color getColorForCode(Long code) {
         return switch (code.intValue()) {
             case 1 -> new Color(0, 102, 204);    // 출근
@@ -163,17 +138,7 @@ public class PdfReportGenerator {
         };
     }
 
-    /**
-     * 근태 상태별 출현 일수를 바 차트로 생성하여 PDF에 삽입 가능한 이미지 객체로 반환합니다.
-     * 항목 수에 따라 막대 너비를 자동 조정합니다.
-     *
-     * @param codeCountMap 근태 코드별 출현 일수 맵
-     * @param baseFont     PDF 폰트 렌더링에 사용할 기본 폰트
-     * @return 생성된 바 차트 이미지 객체
-     * @throws Exception 이미지 생성 중 오류 발생 시
-     */
-
-    private Image createBarChartImage(Map<Long, Long> codeCountMap, BaseFont baseFont) throws Exception {
+    private Image createBarChartImage(Map<Long, Long> codeCountMap) throws Exception {
         int width = 720, height = 270;
         BufferedImage chart = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         Graphics2D g = chart.createGraphics();
@@ -181,26 +146,20 @@ public class PdfReportGenerator {
         g.fillRect(0, 0, width, height);
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        g.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 16));
+        g.setFont(awtKoreanFont.deriveFont(java.awt.Font.BOLD, 16f));
         String title = "근태 상태별 일수 분포";
         g.setColor(Color.BLACK);
         g.drawString(title, (width - g.getFontMetrics().stringWidth(title)) / 2, 25);
 
-        g.setFont(new java.awt.Font(baseFont.getPostscriptFontName(), java.awt.Font.PLAIN, 14));
+        g.setFont(awtKoreanFont.deriveFont(java.awt.Font.PLAIN, 14f));
 
-        // ✅방어 코드: 값이 없거나 전부 0이면 예외 발생
         long totalCount = codeCountMap.values().stream().mapToLong(Long::longValue).sum();
-        if (totalCount == 0) {
-            g.dispose();
-            throw new PdfReportGenerationException("근태 데이터가 없어 바 차트를 생성할 수 없습니다.");
-        }
+        if (totalCount == 0) throw new PdfReportGenerationException("차트를 생성할 데이터가 없습니다.");
 
         int max = codeCountMap.values().stream().mapToInt(Long::intValue).max().orElse(1);
+        int yBase = height - 50, maxHeight = 160;
         int itemCount = codeCountMap.size();
-
-        int yBase = height - 50;
-        int maxHeight = 160;
-        int totalBarArea = width - 100; // 좌우 여백 제외
+        int totalBarArea = width - 100;
         int barSpacing = 20;
         int barWidth = (totalBarArea - (barSpacing * (itemCount - 1))) / itemCount;
         int startX = (width - (barWidth * itemCount + barSpacing * (itemCount - 1))) / 2;
@@ -233,17 +192,6 @@ public class PdfReportGenerator {
         return Image.getInstance(chart, null);
     }
 
-
-
-    /**
-     * 근태 상태별 비율을 도넛 차트로 시각화하여 PDF에 삽입 가능한 이미지로 반환합니다.
-     * 도넛 중앙에는 총 근무일을 표시하고, 우측에 색상별 범례(항목 + 퍼센트)를 출력합니다.
-     *
-     * @param codeCountMap 근태 코드별 일수 맵
-     * @return 생성된 도넛 차트 이미지 객체
-     * @throws Exception 이미지 생성 중 오류 발생 시
-     */
-
     private Image createDoughnutChartImage(Map<Long, Long> codeCountMap) throws Exception {
         int width = 720, height = 350;
         BufferedImage chart = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
@@ -252,7 +200,7 @@ public class PdfReportGenerator {
         g.fillRect(0, 0, width, height);
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        g.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 16));
+        g.setFont(awtKoreanFont.deriveFont(java.awt.Font.BOLD, 16f));
         String title = "근태 상태별 비율";
         g.setColor(Color.BLACK);
         g.drawString(title, (width - g.getFontMetrics().stringWidth(title)) / 2, 25);
@@ -283,7 +231,7 @@ public class PdfReportGenerator {
         g.fillOval(centerX - innerR, centerY - innerR, innerR * 2, innerR * 2);
 
         g.setColor(Color.BLACK);
-        g.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 18));
+        g.setFont(awtKoreanFont.deriveFont(java.awt.Font.BOLD, 18f));
         String text1 = "총 근무일";
         String text2 = total + "일";
         g.drawString(text1, centerX - g.getFontMetrics().stringWidth(text1) / 2, centerY - 5);
@@ -292,7 +240,7 @@ public class PdfReportGenerator {
         int legendX = 500;
         int legendY = 110;
         int boxSize = 18;
-        g.setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 16));
+        g.setFont(awtKoreanFont.deriveFont(java.awt.Font.PLAIN, 16f));
 
         for (Map.Entry<Long, Long> entry : ordered.entrySet()) {
             Long code = entry.getKey();
@@ -312,5 +260,4 @@ public class PdfReportGenerator {
         g.dispose();
         return Image.getInstance(chart, null);
     }
-
 }
