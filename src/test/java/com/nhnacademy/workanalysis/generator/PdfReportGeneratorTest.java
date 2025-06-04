@@ -5,6 +5,7 @@ import com.nhnacademy.workanalysis.exception.PdfReportGenerationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.io.ResourceLoader;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -18,10 +19,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class PdfReportGeneratorTest {
 
     private PdfReportGenerator generator;
-
+    private ResourceLoader resourceLoader;
     @BeforeEach
     void setUp() {
-        generator = new PdfReportGenerator();
+        generator = new PdfReportGenerator(resourceLoader);
     }
 
     @Test

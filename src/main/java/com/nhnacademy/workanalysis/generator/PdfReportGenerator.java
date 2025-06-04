@@ -10,42 +10,28 @@ import com.lowagie.text.pdf.PdfWriter;
 import com.nhnacademy.workanalysis.dto.report.AttendanceReportDto;
 import com.nhnacademy.workanalysis.exception.PdfReportGenerationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.util.LinkedHashMap;
+import java.io.*;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * 근태 리포트를 PDF 형식으로 생성하는 클래스입니다.
- *
- * <p>리포트 구성 요소:</p>
- * <ul>
- *     <li>제목</li>
- *     <li>근태 요약 테이블</li>
- *     <li>바 차트 (근태 상태별 출현 일수 시각화)</li>
- *     <li>도넛 차트 (근태 상태별 비율 시각화)</li>
- * </ul>
- */
 @Slf4j
 @Component
 public class PdfReportGenerator {
 
-    private static final String DEFAULT_FONT_PATH = "src/main/resources/font/NotoSansKR-Regular.ttf";
+    private static final String DEFAULT_FONT_PATH = "classpath:font/NotoSansKR-Regular.ttf";
 
-    /**
-     * 근태 데이터를 기반으로 PDF 형식의 리포트를 생성합니다.
-     *
-     * @param reportDto  근태 상태별 일수 통계가 담긴 DTO
-     * @param memberName 사원의 이름
-     * @param year       리포트를 생성할 연도
-     * @param month      리포트를 생성할 월
-     * @return 생성된 PDF 문서의 바이트 배열
-     * @throws PdfReportGenerationException PDF 생성 중 오류가 발생할 경우 발생
-     */
+    private final ResourceLoader resourceLoader;
+
+    public PdfReportGenerator(ResourceLoader resourceLoader) {
+        this.resourceLoader = resourceLoader;
+    }
 
     public byte[] generateAttendancePdf(AttendanceReportDto reportDto, String memberName, int year, int month) {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -53,7 +39,18 @@ public class PdfReportGenerator {
             PdfWriter.getInstance(document, out);
             document.open();
 
-            BaseFont baseFont = BaseFont.createFont(DEFAULT_FONT_PATH, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+            // ✅ classpath 내 폰트 파일 로드
+            Resource fontResource = resourceLoader.getResource(DEFAULT_FONT_PATH);
+            File tempFontFile = File.createTempFile("tempFont", ".ttf");
+            try (InputStream is = fontResource.getInputStream();
+                 OutputStream os = new FileOutputStream(tempFontFile)) {
+                is.transferTo(os);
+            }
+            BaseFont baseFont = BaseFont.createFont(
+                    tempFontFile.getAbsolutePath(),  // ✅ 문자열 경로 전달
+                    BaseFont.IDENTITY_H,
+                    BaseFont.EMBEDDED
+            );
             Font titleFont = new Font(baseFont, 18, Font.BOLD);
 
             Paragraph title = new Paragraph(String.format("근태 리포트 %d년 %02d월 (%s 사원)", year, month, memberName), titleFont);
