@@ -126,17 +126,18 @@ public class PdfReportGenerator {
 
     private Color getColorForCode(Long code) {
         return switch (code.intValue()) {
-            case 1 -> new Color(0, 102, 204);    // 출근
-            case 2 -> new Color(255, 153, 51);   // 지각
-            case 3 -> new Color(204, 0, 0);      // 결근
-            case 4 -> new Color(102, 204, 0);    // 외근
-            case 5 -> new Color(0, 204, 204);    // 연차
-            case 6 -> new Color(153, 0, 204);    // 질병
-            case 7 -> new Color(255, 204, 0);    // 반차
-            case 8 -> new Color(120, 120, 120);  // 상
-            default -> Color.GRAY;
+            case 2 -> new Color(255, 230, 153);  // 지각 (#ffe699)
+            case 3 -> new Color(248, 215, 218);  // 결근 (#f8d7da)
+            case 4 -> new Color(204, 229, 255);  // 외근 (#cce5ff)
+            case 5 -> new Color(226, 213, 248);  // 연차 (#e2d5f8)
+            case 6 -> new Color(212, 237, 218);  // 질병 (#d4edda)
+            case 7 -> new Color(255, 229, 180);  // 반차 (#ffe5b4)
+            case 8 -> new Color(252, 228, 236);  // 상 (#fce4ec)
+            case 1 -> new Color(180, 200, 255);  // 출근 (없던 색, 추가 지정)
+            default -> new Color(208, 234, 255); // 기타 (#d0eaff)
         };
     }
+
 
     private Image createBarChartImage(Map<Long, Long> codeCountMap) throws Exception {
         int width = 720, height = 270;
