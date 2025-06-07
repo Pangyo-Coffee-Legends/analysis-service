@@ -14,6 +14,9 @@
 
 ---
 
+## analysis-service 아키텍쳐
+![ChatGPT Image 2025년 6월 4일 오후 10_28_50](https://github.com/user-attachments/assets/41ef70d9-5524-4af1-a260-4ad2fb6852a6)
+
 ## 🛠 기술 스택 및 개발 환경
 
 ### 🔧 Backend / Frontend / Infra
@@ -39,7 +42,7 @@
 | **시각화**    | Chart.js, marked.js                     |
 | **PDF 생성** | iText 2.1.7 (***BufferedImage*** 기반 차트) |
 
----
+
 
 ## 🗂 프로젝트 구조
 
